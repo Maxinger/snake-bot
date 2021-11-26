@@ -25,7 +25,7 @@ def play(bot1, bot2, n_games):
         print(f'{desc[1]}: {desc[0]}')
 
 
-random_bot1 = import_bot('random_bot.py', 'random1')
-random_bot2 = import_bot('random_bot.py', 'random2')
+new_bot = import_bot('estimate_bot.py', 'estimate1')
+baseline_bot = import_bot('random_bot.py', 'random')
 
-play(random_bot1, random_bot2, 1000)
+play(new_bot, baseline_bot, 100)
