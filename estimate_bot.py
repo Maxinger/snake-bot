@@ -3,7 +3,7 @@ from src.geometry import Direction, Coordinate, directions
 from src.snake import Snake
 
 import random
-import numpy as np
+from copy import deepcopy
 
 EDGE_PENALTY = -1
 CORNER_PENALTIES = [-5, -4, -3, -2, -1]
@@ -21,9 +21,9 @@ def setValuesAroundCell(maze, mazeSize, cell, values, accumulate=True):
     while queue:
         current, distance = queue.pop(0)
         if accumulate:
-            maze[current.y, current.x] += values[distance]
+            maze[current.x][current.y] += values[distance]
         else:
-            maze[current.y, current.x] = values[distance]
+            maze[current.x][current.y] = values[distance]
 
         for d in directions:
             neighbor = current.moveTo(d)
@@ -40,16 +40,18 @@ class Bot(IBot):
         self.baseMaze = None
 
     def initMaze(self, mazeSize):
-        self.baseMaze = np.zeros((mazeSize.y, mazeSize.x))
+        self.baseMaze = []
+        for y in range(mazeSize.y):
+            self.baseMaze.append([0 for x in range(mazeSize.x)])
 
         # penalize edges
         for y in range(mazeSize.y):
-            self.baseMaze[0, y] += EDGE_PENALTY
-            self.baseMaze[mazeSize.x - 1, y] += EDGE_PENALTY
+            self.baseMaze[0][y] += EDGE_PENALTY
+            self.baseMaze[mazeSize.x - 1][y] += EDGE_PENALTY
 
         for x in range(1, mazeSize.x - 1):
-            self.baseMaze[x, 0] += EDGE_PENALTY
-            self.baseMaze[x, mazeSize.y - 1] += EDGE_PENALTY
+            self.baseMaze[x][0] += EDGE_PENALTY
+            self.baseMaze[x][mazeSize.y - 1] += EDGE_PENALTY
 
         # penalize corners
         setValuesAroundCell(self.baseMaze, mazeSize, Coordinate(0, 0), CORNER_PENALTIES, False)
@@ -61,7 +63,7 @@ class Bot(IBot):
         if self.baseMaze is None:
             self.initMaze(mazeSize)
 
-        maze = self.baseMaze.copy()
+        maze = deepcopy(self.baseMaze)
         # apple reward
         setValuesAroundCell(maze, mazeSize, apple, APPLE_REWARD)
 
@@ -73,18 +75,18 @@ class Bot(IBot):
             for d in directions:
                 neighbor = each.moveTo(d)
                 if neighbor not in opponent.elements and neighbor not in updated and neighbor.inBounds(mazeSize):
-                    maze[each.x, each.y] += OPPONENT_BODY_PENALTIES
+                    maze[each.x][each.y] += OPPONENT_BODY_PENALTIES
                     updated.add(each)
 
         # snakes themselves
         for each in snake.elements:
-            maze[each.x, each.y] = SNAKE_PENALTY
+            maze[each.x][each.y] = SNAKE_PENALTY
         for each in opponent.elements:
-            maze[each.x, each.y] = SNAKE_PENALTY
+            maze[each.x][each.y] = SNAKE_PENALTY
 
         # just for visualisation
-        maze[snake.head.x, snake.head.y] -= 1
-        maze[opponent.head.x, opponent.head.y] -= 2
+        maze[snake.head.x][snake.head.y] -= 1
+        maze[opponent.head.x][opponent.head.y] -= 2
 
         possible_directions = []
 
@@ -94,7 +96,7 @@ class Bot(IBot):
             if new_head.inBounds(mazeSize) \
                     and new_head not in snake.elements \
                     and new_head not in opponent.elements:
-                possible_directions.append((d, maze[new_head.x, new_head.y]))
+                possible_directions.append((d, maze[new_head.x][new_head.y]))
 
         if possible_directions:
             return max(possible_directions, key=lambda d: d[1])[0]
