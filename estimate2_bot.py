@@ -8,9 +8,9 @@ from copy import deepcopy
 EDGE_PENALTY = -1
 CORNER_PENALTIES = [-5, -4, -3, -2, -1]
 OPPONENT_HEAD_PENALTIES = [0, -3, -2, -1]
-OPPONENT_BODY_PENALTIES = -1
+OPPONENT_BODY_PENALTY = -1
 SNAKE_PENALTY = -10
-APPLE_REWARD = [10, 8, 6, 4, 2]
+APPLE_REWARD = list(range(15, 0, -1))
 
 
 def setValuesAroundCell(maze, mazeSize, cell, values, accumulate=True):
@@ -34,10 +34,13 @@ def setValuesAroundCell(maze, mazeSize, cell, values, accumulate=True):
     return updated
 
 
+# Wider distribution of apple rewards
 class Bot(IBot):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.baseMaze = None
+        self.apple = None
+        self.mazeWithApple = None
 
     def initMaze(self, mazeSize):
         self.baseMaze = []
@@ -63,9 +66,13 @@ class Bot(IBot):
         if self.baseMaze is None:
             self.initMaze(mazeSize)
 
-        maze = deepcopy(self.baseMaze)
-        # apple reward
-        setValuesAroundCell(maze, mazeSize, apple, APPLE_REWARD)
+        if apple != self.apple:
+            self.apple = apple
+            self.mazeWithApple = deepcopy(self.baseMaze)
+            # apple reward
+            setValuesAroundCell(self.mazeWithApple, mazeSize, apple, APPLE_REWARD)
+
+        maze = deepcopy(self.mazeWithApple)
 
         # opponent's potential moves
         updated = setValuesAroundCell(maze, mazeSize, opponent.head, OPPONENT_HEAD_PENALTIES)
@@ -75,7 +82,7 @@ class Bot(IBot):
             for d in directions:
                 neighbor = each.moveTo(d)
                 if neighbor not in opponent.elements and neighbor not in updated and neighbor.inBounds(mazeSize):
-                    maze[each.x][each.y] += OPPONENT_BODY_PENALTIES
+                    maze[each.x][each.y] += OPPONENT_BODY_PENALTY
                     updated.add(each)
 
         # snakes themselves
