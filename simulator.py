@@ -1,5 +1,6 @@
 from collections import Counter
 from scipy.stats import binom_test
+from tqdm import tqdm
 
 from src.importsTools import import_bot
 from playGame import play_one_game
@@ -9,7 +10,7 @@ def play(bot1, bot2, n_games):
     wins = [0, 0]
     scores = [0, 0]
     descriptions = Counter()
-    for g in range(n_games):
+    for g in tqdm(range(n_games)):
         result = play_one_game(bot1, bot2)
         for i in range(2):
             wins[i] += result['metadata']['result'][i]
