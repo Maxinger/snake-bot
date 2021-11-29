@@ -9,7 +9,7 @@ from collections import Counter
 EDGE_PENALTY = -1
 CORNER_PENALTIES = [-5, -4, -3, -2, -1]
 OPPONENT_HEAD_PENALTIES = [0, -2, -1]
-SNAKE_PENALTY = -10
+SNAKE_PENALTY = -11
 APPLE_REWARD = list(range(15, 0, -1))
 
 
@@ -93,11 +93,11 @@ class Bot(IBot):
         for each in snake.elements:
             maze[each.x][each.y] = SNAKE_PENALTY
         for each in opponent.elements:
-            maze[each.x][each.y] = SNAKE_PENALTY
+            maze[each.x][each.y] = SNAKE_PENALTY - 1
 
         # just for visualisation
-        maze[snake.head.x][snake.head.y] -= 1
-        maze[opponent.head.x][opponent.head.y] -= 2
+        maze[snake.head.x][snake.head.y] -= 10
+        maze[opponent.head.x][opponent.head.y] -= 10
 
         cells_to_avoid = set()
         # prevent collision with opponent's head
@@ -117,7 +117,9 @@ class Bot(IBot):
         def path_exists(cell, length, visited=[]):
             move = len(visited) + 1
             # print('-' * move + '>' + str(cell))
-            if not cell.inBounds(mazeSize):
+            if cell in visited:
+                return False
+            elif not cell.inBounds(mazeSize):
                 return False
             elif occupation[cell.x][cell.y] >= move:
                 return False
@@ -151,11 +153,13 @@ class Bot(IBot):
                     and new_head not in opponent.elements:
                 possible_directions.append((d, maze[new_head.x][new_head.y]))
                 if new_head not in cells_to_avoid:
-                    safe_directions.append((d, possible_directions[-1]))
+                    safe_directions.append(possible_directions[-1])
 
         if safe_directions:
-            return max(possible_directions, key=lambda d: d[1])[0]
+            result = max(safe_directions, key=lambda d: d[1])[0]
         elif possible_directions:
-            return max(possible_directions, key=lambda d: d[1])[0]
+            result = max(possible_directions, key=lambda d: d[1])[0]
         else:
-            return random.choice(directions)
+            result = random.choice(directions)
+
+        return result

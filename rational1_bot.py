@@ -115,11 +115,13 @@ class Bot(IBot):
                     and new_head not in opponent.elements:
                 possible_directions.append((d, maze[new_head.x][new_head.y]))
                 if new_head not in cells_to_avoid:
-                    safe_directions.append((d, possible_directions[-1]))
+                    safe_directions.append(possible_directions[-1])
 
-        if safe_directions:
-            return max(possible_directions, key=lambda d: d[1])[0]
-        elif possible_directions:
-            return max(possible_directions, key=lambda d: d[1])[0]
-        else:
-            return random.choice(directions)
+            if safe_directions:
+                result = max(safe_directions, key=lambda d: d[1])[0]
+            elif possible_directions:
+                result = max(possible_directions, key=lambda d: d[1])[0]
+            else:
+                result = random.choice(directions)
+
+            return result
