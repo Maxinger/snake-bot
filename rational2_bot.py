@@ -13,6 +13,13 @@ SNAKE_PENALTY = -11
 APPLE_REWARD = list(range(15, 0, -1))
 
 
+def neighbors(cell, mazeSize):
+    for d in directions:
+        neighbor = cell.moveTo(d)
+        if neighbor.inBounds(mazeSize):
+            yield neighbor
+
+
 def setValuesAroundCell(maze, mazeSize, cell, values, accumulate=True):
     updated = {cell}
     queue = [(cell, 0)]  # (cell, distance)
@@ -25,9 +32,8 @@ def setValuesAroundCell(maze, mazeSize, cell, values, accumulate=True):
         else:
             maze[current.x][current.y] = values[distance]
 
-        for d in directions:
-            neighbor = current.moveTo(d)
-            if distance + 1 < max_distance and neighbor not in updated and neighbor.inBounds(mazeSize):
+        for neighbor in neighbors(current, mazeSize):
+            if distance + 1 < max_distance and neighbor not in updated:
                 updated.add(neighbor)
                 queue.append((neighbor, distance + 1))
 
@@ -62,7 +68,6 @@ class Bot(IBot):
         setValuesAroundCell(self.baseMaze, mazeSize, Coordinate(0, mazeSize.y - 1), CORNER_PENALTIES, False)
         setValuesAroundCell(self.baseMaze, mazeSize, Coordinate(mazeSize.x - 1, mazeSize.y - 1), CORNER_PENALTIES, False)
 
-
     def chooseDirection(self, snake: Snake, opponent: Snake, mazeSize: Coordinate, apple: Coordinate) -> Direction:
         if self.baseMaze is None:
             self.initMaze(mazeSize)
@@ -78,29 +83,11 @@ class Bot(IBot):
         # opponent's potential moves
         setValuesAroundCell(maze, mazeSize, opponent.head, OPPONENT_HEAD_PENALTIES)
 
-        # surroundings
-        surroundings = Counter()
-        for each in snake.body[1:-1] + opponent.body[1:-1]:
-            for d in directions:
-                neighbor = each.moveTo(d)
-                if neighbor.inBounds(mazeSize):
-                    surroundings.update({neighbor: 1})
-
-        for d in directions:
-            cell = snake.head.moveTo(d)
-            if cell.x == 0 or cell.x == mazeSize.x - 1:
-                surroundings.update({cell: 1})
-            if cell.y == 0 or cell.y == mazeSize.y - 1:
-                surroundings.update({cell: 1})
-
-        for each in surroundings:
-            maze[each.x][each.y] -= surroundings[each] ** 2
-
         # snakes themselves
-        for each in snake.elements:
-            maze[each.x][each.y] = SNAKE_PENALTY
-        for each in opponent.elements:
-            maze[each.x][each.y] = SNAKE_PENALTY - 1
+        for cell in snake.elements:
+            maze[cell.x][cell.y] = SNAKE_PENALTY
+        for cell in opponent.elements:
+            maze[cell.x][cell.y] = SNAKE_PENALTY - 1
 
         # just for visualisation
         maze[snake.head.x][snake.head.y] -= 10
@@ -109,45 +96,38 @@ class Bot(IBot):
         cells_to_avoid = set()
         # prevent collision with opponent's head
         if len(snake.body) <= len(opponent.body):
-            for d in directions:
-                cells_to_avoid.add(opponent.head.moveTo(d))
+            for neighbor in neighbors(opponent.head, mazeSize):
+                cells_to_avoid.add(neighbor)
 
         # avoid dead zones
         occupation = []
         for y in range(mazeSize.y):
             occupation.append([0 for _ in range(mazeSize.x)])
-        for i, each in enumerate(snake.body[::-1]):
-            occupation[each.x][each.y] = i + 1
-        for i, each in enumerate(opponent.body[::-1]):
-            occupation[each.x][each.y] = i + 1
+        for i, cell in enumerate(snake.body[::-1]):
+            occupation[cell.x][cell.y] = i + 1
+        for i, cell in enumerate(opponent.body[::-1]):
+            occupation[cell.x][cell.y] = i + 1
 
         def path_exists(cell, length, visited=[]):
             move = len(visited) + 1
-            # print('-' * move + '>' + str(cell))
             if cell in visited:
-                return False
-            elif not cell.inBounds(mazeSize):
                 return False
             elif occupation[cell.x][cell.y] >= move:
                 return False
             elif move == length:
                 return True
             else:
-                for d in directions:
-                    if path_exists(cell.moveTo(d), length, visited + [cell]):
+                for n in neighbors(cell, mazeSize):
+                    if path_exists(n, length, visited + [cell]):
                         return True
             return False
 
-        for d in directions:
-            neighbor = snake.head.moveTo(d)
+        for neighbor in neighbors(snake.head, mazeSize):
             if neighbor not in cells_to_avoid\
-                    and neighbor.inBounds(mazeSize) \
-                    and neighbor not in snake.elements \
-                    and neighbor not in opponent.elements:
-                    # and not path_exists(neighbor, len(snake.body)):
-                # print('Exploration for length: ' + str(len(snake.body)))
-                if not path_exists(neighbor, len(snake.body)):
-                    cells_to_avoid.add(neighbor)
+                    and neighbor not in snake.elements\
+                    and neighbor not in opponent.elements\
+                    and not path_exists(neighbor, len(snake.body)):
+                cells_to_avoid.add(neighbor)
 
         possible_directions = []
         safe_directions = []
