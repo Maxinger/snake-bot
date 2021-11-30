@@ -86,6 +86,13 @@ class Bot(IBot):
                 if neighbor.inBounds(mazeSize):
                     surroundings.update({neighbor: 1})
 
+        for d in directions:
+            cell = snake.head.moveTo(d)
+            if cell.x == 0 or cell.x == mazeSize.x - 1:
+                surroundings.update({cell: 1})
+            if cell.y == 0 or cell.y == mazeSize.y - 1:
+                surroundings.update({cell: 1})
+
         for each in surroundings:
             maze[each.x][each.y] -= surroundings[each] ** 2
 

@@ -117,11 +117,11 @@ class Bot(IBot):
                 if new_head not in cells_to_avoid:
                     safe_directions.append(possible_directions[-1])
 
-            if safe_directions:
-                result = max(safe_directions, key=lambda d: d[1])[0]
-            elif possible_directions:
-                result = max(possible_directions, key=lambda d: d[1])[0]
-            else:
-                result = random.choice(directions)
+        if safe_directions:
+            result = max(safe_directions, key=lambda d: d[1])[0]
+        elif possible_directions:
+            result = max(possible_directions, key=lambda d: d[1])[0]
+        else:
+            result = random.choice(directions)
 
-            return result
+        return result
