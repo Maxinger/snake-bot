@@ -10,7 +10,7 @@ def play(bot1, bot2, n_games):
     wins = [0, 0]
     scores = [0, 0]
     descriptions = Counter()
-    for g in tqdm(range(n_games)):
+    for _ in tqdm(range(n_games)):
         result = play_one_game(bot1, bot2)
         for i in range(2):
             wins[i] += result['metadata']['result'][i]
@@ -19,7 +19,7 @@ def play(bot1, bot2, n_games):
     n_wins = sum(wins)
     print(f'Total games: {n_games}')
     print(f'Results: +{wins[0]}={n_games - n_wins}-{wins[1]} ({int(wins[0] / n_wins * 100)}%)')
-    print(f'Score: {scores[0]}:{scores[1]}')
+    print('Average score: {:.1f}:{:.1f}'.format(scores[0] / n_games, scores[1] / n_games))
     print('P-value: {:.3f}'.format(binom_test(max(wins), n_wins, alternative='greater')))
 
     for desc in descriptions.most_common():
