@@ -64,6 +64,7 @@ class Bot(IBot):
         self.apple = None
         self.mazeWithApple = None
         self.centeredMaze = None
+        self.center = None
 
     def initMaze(self, mazeSize):
         self.baseMaze = []
@@ -87,6 +88,8 @@ class Bot(IBot):
 
         self.centeredMaze = deepcopy(self.baseMaze)
         setValuesAroundSquare(self.centeredMaze, mazeSize, Coordinate(mazeSize.x // 2 - 1, mazeSize.y // 2 - 1), CENTER_REWARDS, False)
+
+        self.center = Coordinate((mazeSize.x - 1) / 2, (mazeSize.y - 1) / 2)
 
     def chooseDirection(self, snake: Snake, opponent: Snake, mazeSize: Coordinate, apple: Coordinate) -> Direction:
         if self.baseMaze is None:
@@ -162,7 +165,9 @@ class Bot(IBot):
                     and new_head not in opponent.elements:
 
                 value = maze[new_head.x][new_head.y]
-                if not concedeApple:
+                if concedeApple:
+                    value += (1 - new_head.getMathDistance(self.center) / mazeSize.x)  # prefer cells closer to center
+                else:
                     value += (1 - new_head.getDistance(apple) / mazeSize.x)  # prefer cells closer to apple
                 direction_tuple = (d, value)
                 possible_directions.append(direction_tuple)
