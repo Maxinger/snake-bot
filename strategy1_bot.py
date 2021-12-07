@@ -86,10 +86,13 @@ class Bot(IBot):
         setValuesAroundCell(self.baseMaze, mazeSize, Coordinate(0, mazeSize.y - 1), CORNER_PENALTIES, False)
         setValuesAroundCell(self.baseMaze, mazeSize, Coordinate(mazeSize.x - 1, mazeSize.y - 1), CORNER_PENALTIES, False)
 
-        self.centeredMaze = deepcopy(self.baseMaze)
-        setValuesAroundSquare(self.centeredMaze, mazeSize, Coordinate(mazeSize.x // 2 - 1, mazeSize.y // 2 - 1), CENTER_REWARDS, False)
-
         self.center = Coordinate((mazeSize.x - 1) / 2, (mazeSize.y - 1) / 2)
+
+        self.centeredMaze = deepcopy(self.baseMaze)
+        if mazeSize.x % 2 == 0:
+            setValuesAroundSquare(self.centeredMaze, mazeSize, Coordinate(mazeSize.x // 2 - 1, mazeSize.y // 2 - 1), CENTER_REWARDS, False)
+        else:
+            setValuesAroundCell(self.centeredMaze, mazeSize, Coordinate(int(self.center.x), int(self.center.y)), CENTER_REWARDS, False)
 
     def chooseDirection(self, snake: Snake, opponent: Snake, mazeSize: Coordinate, apple: Coordinate) -> Direction:
         if self.baseMaze is None:
