@@ -98,9 +98,9 @@ def isMoveSafe(move, snake, opponent, occupation, mazeSize, depth, predefinedOpp
         return res
     else:
         try:
-            opponentMoves = [predefinedOpponentMove] if predefinedOpponentMove else [m for m in
-                                                                                     allowedMoves(opponent[0], mazeSize,
-                                                                                                  occupation)]
+            opponentMoves = [predefinedOpponentMove]\
+                if predefinedOpponentMove\
+                else [m for m in allowedMoves(opponent[0], mazeSize, occupation)]
 
             simulateMove(move, snake, occupation)
 
@@ -120,15 +120,19 @@ def isMoveSafe(move, snake, opponent, occupation, mazeSize, depth, predefinedOpp
                     try:
                         simulateMove(opponentMove, opponent, occupation)
 
+                        safeMoveExists = False
                         for nextMove in allowedMoves(move, mazeSize, occupation):
                             if isMoveSafe(nextMove, [move] + snake[:-1], [opponentMove] + opponent[:-1], occupation, mazeSize, depth - 1):
-                                return True
+                                safeMoveExists = True
+                                break
+                        if not safeMoveExists:
+                            return False
                     finally:
                         rollbackMove(opponentMove, opponent, occupation)
         finally:
             rollbackMove(move, snake, occupation)
 
-    return False
+    return True
 
 
 # Detects losing and winning moves with given depth
@@ -140,6 +144,7 @@ class Bot(IBot):
         self.mazeWithApple = None
         self.centeredMaze = None
         self.center = None
+        self.lastMaze = None
 
     def initMaze(self, mazeSize):
         self.baseMaze = []
@@ -248,16 +253,14 @@ class Bot(IBot):
                 possible_directions.append(direction_tuple)
                 if new_head in winning_cells:
                     winning_directions.append(direction_tuple)
-                # prevent collision with opponent's head
-                if new_head not in cells_to_avoid:
-                    if len(snake.body) <= len(opponent.body) and new_head in opponent_moves:
-                        risky_directions.append(direction_tuple)
-                    else:
-                        safe_directions.append(direction_tuple)
+                elif new_head in cells_to_avoid:
+                    risky_directions.append(direction_tuple)
+                else:
+                    safe_directions.append(direction_tuple)
 
         if winning_directions:
             result = max(winning_directions, key=lambda d: d[1])[0]
-        if safe_directions:
+        elif safe_directions:
             result = max(safe_directions, key=lambda d: d[1])[0]
         elif risky_directions:
             result = max(risky_directions, key=lambda d: d[1])[0]
@@ -266,4 +269,5 @@ class Bot(IBot):
         else:
             result = random.choice(directions)
 
+        self.lastMaze = maze
         return result
